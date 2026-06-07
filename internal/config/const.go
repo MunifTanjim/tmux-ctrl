@@ -7,4 +7,6 @@ const (
 	ProjectName = "tmux-ctrl"
 
 	ConfigFileName = "config.yaml"
+
+	HiddenSessionName = "_"
 )

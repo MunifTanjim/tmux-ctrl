@@ -9,6 +9,7 @@ import (
 
 	"github.com/MunifTanjim/tmux-ctrl/internal/cli/completion"
 	"github.com/MunifTanjim/tmux-ctrl/internal/config"
+	"github.com/MunifTanjim/tmux-ctrl/internal/util"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,6 +24,9 @@ var rootCmd = &cobra.Command{
 	Long:  `tmux-ctrl - a command-line tool for controlling tmux.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
+		if err := util.EnsureTool("tmux"); err != nil {
+			return err
+		}
 		return initializeConfig(cmd)
 	},
 }
@@ -36,6 +40,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $XDG_CONFIG_HOME/%s/%s)", config.ProjectName, config.ConfigFileName))
+	_ = rootCmd.MarkPersistentFlagFilename("config", "yaml", "yml")
 
 	rootCmd.InitDefaultCompletionCmd()
 	if cmd, _, _ := rootCmd.Find([]string{"completion"}); cmd != nil && cmd.Name() == "completion" {

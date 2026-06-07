@@ -38,7 +38,10 @@ func NewFuzzySearch[T any](conf FuzzySearchConfig[T]) *FuzzySearch[T] {
 	}
 }
 
-var ErrNoMatch = errors.New("no match found")
+var (
+	ErrNoMatch   = errors.New("no match found")
+	ErrCancelled = errors.New("cancelled")
+)
 
 func (f *FuzzySearch[T]) Run() ([]T, error) {
 	if err := util.EnsureTool("fzf"); err != nil {
@@ -78,7 +81,7 @@ func (f *FuzzySearch[T]) Run() ([]T, error) {
 	if err := cmd.Run(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if exitErr.ExitCode() == 130 {
-				return nil, fmt.Errorf("selection cancelled")
+				return nil, ErrCancelled
 			}
 			if exitErr.ExitCode() == 1 {
 				return nil, ErrNoMatch
@@ -89,7 +92,7 @@ func (f *FuzzySearch[T]) Run() ([]T, error) {
 
 	output := cmd.StdOut().TrimSpace().String()
 	if output == "" {
-		return nil, fmt.Errorf("no selection made")
+		return nil, ErrCancelled
 	}
 
 	selected := strings.Split(output, "\n")

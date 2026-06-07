@@ -91,9 +91,9 @@ EOF
 
 To enable zsh completions, run the following command:
 
-  tmux-ctrl completion install
+  ${BINARY_NAME} completion install
   # or
-  tmux-ctrl completion zsh > "\${fpath[1]}/_tmux-ctrl"
+  ${BINARY_NAME} completion zsh > "\${fpath[1]}/_${BINARY_NAME}"
 
 EOF
     ;;
