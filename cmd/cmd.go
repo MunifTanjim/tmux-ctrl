@@ -5,6 +5,7 @@ import (
 	"github.com/MunifTanjim/tmux-ctrl/internal/cli/doctor"
 	"github.com/MunifTanjim/tmux-ctrl/internal/cli/pane"
 	"github.com/MunifTanjim/tmux-ctrl/internal/cli/session"
+	"github.com/MunifTanjim/tmux-ctrl/internal/cli/upgrade"
 	"github.com/MunifTanjim/tmux-ctrl/internal/cli/window"
 )
 
@@ -14,6 +15,7 @@ func init() {
 		doctor.Command(),
 		pane.Command(),
 		session.Command(),
+		upgrade.Command(),
 		window.Command(),
 	)
 }

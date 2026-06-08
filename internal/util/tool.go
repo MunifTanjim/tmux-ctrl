@@ -17,6 +17,12 @@ Homebrew:
 Homebrew:
   brew install fzf
 `),
+	"gh": strings.TrimSpace(`
+Homebrew:
+	brew install gh
+
+Or see: https://cli.github.com
+`),
 	"tmux": strings.TrimSpace(`
 Homebrew:
 	brew install tmux

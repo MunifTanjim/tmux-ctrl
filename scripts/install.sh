@@ -74,7 +74,7 @@ main() {
 
   success "Successfully installed $BINARY_NAME to $install_path"
 
-  if [[ ":$PATH:" != *":$INSTALL_DIR::"* ]]; then
+  if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     cat <<EOF
 
 Note: \$INSTALL_DIR is not in your PATH.
