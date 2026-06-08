@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.2](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.1...0.0.2) (2026-06-08)
+
+
+### Features
+
+* add upgrade command ([d9b0730](https://github.com/MunifTanjim/tmux-ctrl/commit/d9b07309c9a80bb6a0eca26ac6953713410d1c9f))
+
 ## 0.0.1 (2026-06-08)
 
 
