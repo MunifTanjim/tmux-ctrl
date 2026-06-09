@@ -23,6 +23,10 @@ func MoveCommand() *cobra.Command {
 				return err
 			}
 
+			if err := ensureWindowUnzoomed(paneID); err != nil {
+				return err
+			}
+
 			// Corners are inherently an edge placement; assume --edge for them.
 			if edge || isCornerDirection(direction) {
 				return movePaneToEdge(paneID, direction, size)

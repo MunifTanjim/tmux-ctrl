@@ -173,6 +173,19 @@ func hidePane(paneID, tag string) error {
 	})
 }
 
+// ensureWindowUnzoomed unzooms target's window (empty = current) when zoomed, so
+// later layout-geometry reads reflect the real pane arrangement. No-op otherwise.
+func ensureWindowUnzoomed(targetPane string) error {
+	flag, err := tmux.DisplayMessage("#{window_zoomed_flag}", &tmux.DisplayMessageParams{TargetPane: targetPane})
+	if err != nil {
+		return err
+	}
+	if flag != "1" {
+		return nil
+	}
+	return tmux.ResizePane(&tmux.ResizePaneParams{TargetPane: targetPane, ToggleZoom: true})
+}
+
 // paneDirections lists every placement direction accepted by the show/move
 // commands, in the order they are offered for completion.
 var paneDirections = []string{

@@ -26,6 +26,24 @@ func UnsetPaneOption(option string, params *SetPaneOptionParams) error {
 	return run(args...)
 }
 
+type ResizePaneParams struct {
+	TargetPane string
+	ToggleZoom bool // -Z
+}
+
+// ResizePane runs `resize-pane`.
+func ResizePane(params *ResizePaneParams) error {
+	args := []string{"resize-pane"}
+	if params.ToggleZoom {
+		args = append(args, "-Z")
+	}
+	if params.TargetPane != "" {
+		args = append(args, "-t", params.TargetPane)
+	}
+
+	return run(args...)
+}
+
 type ListPanesParams struct {
 	Format string
 	Target string

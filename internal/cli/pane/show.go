@@ -69,6 +69,10 @@ func ShowCommand() *cobra.Command {
 				return nil
 			}
 
+			if err := ensureWindowUnzoomed(""); err != nil {
+				return err
+			}
+
 			return showPane(winLoc, selected[0].Ref, direction, size)
 		},
 	}

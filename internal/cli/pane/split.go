@@ -30,6 +30,10 @@ func SplitCommand() *cobra.Command {
 				return err
 			}
 
+			if err := ensureWindowUnzoomed(paneID); err != nil {
+				return err
+			}
+
 			o := splitOptions{
 				paneID:    paneID,
 				direction: direction,
