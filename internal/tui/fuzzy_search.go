@@ -11,29 +11,42 @@ import (
 	"github.com/MunifTanjim/tmux-ctrl/internal/util"
 )
 
-type FuzzySearchConfig[T any] struct {
+type FZFSearchConfig[T any] struct {
 	Header        string
 	Items         []T
 	AutoSelectOne bool
 	Multi         bool
-	Preview       func(T) string
 	Query         string
+
+	Fields            func(T) []string
+	FieldDelimiter    string
+	FieldDisplayRange string
+
+	PreviewCommand string
+	PreviewWindow  string
 }
 
-type FuzzySearch[T any] struct {
-	config FuzzySearchConfig[T]
+type FZFSearch[T any] struct {
+	config FZFSearchConfig[T]
 }
 
-func NewFuzzySearch[T any](conf FuzzySearchConfig[T]) *FuzzySearch[T] {
-	if conf.Preview == nil {
-		conf.Preview = func(item T) string {
+func NewFZFSearch[T any](conf FZFSearchConfig[T]) *FZFSearch[T] {
+	if conf.Fields == nil {
+		conf.Fields = func(item T) []string {
 			if s, ok := any(item).(fmt.Stringer); ok {
-				return s.String()
+				return []string{s.String()}
 			}
-			return fmt.Sprintf("%v", item)
+			return []string{fmt.Sprintf("%v", item)}
 		}
 	}
-	return &FuzzySearch[T]{
+	if conf.FieldDelimiter == "" {
+		conf.FieldDelimiter = "\t"
+	}
+	if conf.PreviewCommand != "" && conf.PreviewWindow == "" {
+		// up split, 60% height; auto-hide the preview when the window is < 4 lines.
+		conf.PreviewWindow = "up,60%,noinfo,<4(hidden)"
+	}
+	return &FZFSearch[T]{
 		config: conf,
 	}
 }
@@ -43,7 +56,7 @@ var (
 	ErrCancelled = errors.New("cancelled")
 )
 
-func (f *FuzzySearch[T]) Run() ([]T, error) {
+func (f *FZFSearch[T]) Run() ([]T, error) {
 	if err := util.EnsureTool("fzf"); err != nil {
 		return nil, err
 	}
@@ -66,12 +79,21 @@ func (f *FuzzySearch[T]) Run() ([]T, error) {
 		args = append(args, "--query", f.config.Query)
 	}
 
+	args = append(args, "--delimiter", f.config.FieldDelimiter)
+	if f.config.FieldDisplayRange != "" {
+		args = append(args, "--with-nth", f.config.FieldDisplayRange)
+	}
+
+	if f.config.PreviewCommand != "" {
+		args = append(args, "--preview", f.config.PreviewCommand, "--preview-window", f.config.PreviewWindow)
+	}
+
 	items := make([]string, 0, len(f.config.Items))
-	idxByPreview := make(map[string]int, len(f.config.Items))
+	idxByFields := make(map[string]int, len(f.config.Items))
 	for i, item := range f.config.Items {
-		preview := f.config.Preview(item)
-		items = append(items, preview)
-		idxByPreview[strings.TrimSpace(preview)] = i
+		fields := strings.Join(f.config.Fields(item), f.config.FieldDelimiter)
+		items = append(items, fields)
+		idxByFields[strings.TrimSpace(fields)] = i
 	}
 
 	cmd := shell.NewCommand("fzf", args...).
@@ -96,10 +118,10 @@ func (f *FuzzySearch[T]) Run() ([]T, error) {
 	}
 
 	selected := strings.Split(output, "\n")
-	result := make([]T, len(selected))
-	for i, sel := range selected {
-		if idx, ok := idxByPreview[strings.TrimSpace(sel)]; ok {
-			result[i] = f.config.Items[idx]
+	result := make([]T, 0, len(selected))
+	for _, sel := range selected {
+		if idx, ok := idxByFields[strings.TrimSpace(sel)]; ok {
+			result = append(result, f.config.Items[idx])
 		}
 	}
 	return result, nil

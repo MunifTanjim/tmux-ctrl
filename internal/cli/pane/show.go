@@ -1,10 +1,7 @@
 package pane
 
 import (
-	"errors"
-	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/MunifTanjim/tmux-ctrl/internal/tui"
 	"github.com/spf13/cobra"
@@ -47,25 +44,11 @@ func ShowCommand() *cobra.Command {
 				return nil
 			}
 
-			selected, err := tui.NewFuzzySearch(tui.FuzzySearchConfig[hiddenPane]{
-				Header:        "Select pane to show",
-				Items:         panes,
-				AutoSelectOne: true,
-				Preview: func(pane hiddenPane) string {
-					if len(pane.Tags) > 0 {
-						return fmt.Sprintf("%s\t%s\t%s", strings.Join(pane.Tags, ","), pane.Command, pane.Path)
-					}
-					return fmt.Sprintf("%s\t%s", pane.Command, pane.Path)
-				},
-			}).Run()
+			selectedRef, err := selectHiddenPane(panes)
 			if err != nil {
-				if errors.Is(err, tui.ErrCancelled) || errors.Is(err, tui.ErrNoMatch) {
-					return nil
-				}
 				return err
 			}
-
-			if len(selected) == 0 {
+			if selectedRef == "" {
 				return nil
 			}
 
@@ -73,7 +56,7 @@ func ShowCommand() *cobra.Command {
 				return err
 			}
 
-			return showPane(winLoc, selected[0].Ref, direction, size)
+			return showPane(winLoc, selectedRef, direction, size)
 		},
 	}
 

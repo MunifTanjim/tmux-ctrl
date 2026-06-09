@@ -29,6 +29,12 @@ Homebrew:
 `),
 }
 
+// HasTool reports whether tool is available on $PATH.
+func HasTool(tool string) bool {
+	_, err := exec.LookPath(tool)
+	return err == nil
+}
+
 func EnsureTool(tool string) error {
 	_, err := exec.LookPath(tool)
 	if err == nil {

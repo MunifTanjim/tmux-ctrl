@@ -32,7 +32,7 @@ func PickZshShellCompletionDir() (string, error) {
 		}
 	}
 
-	selected, err := tui.NewFuzzySearch(tui.FuzzySearchConfig[string]{
+	selected, err := tui.NewFZFSearch(tui.FZFSearchConfig[string]{
 		Header:        "Select directory for completion",
 		Items:         fpaths,
 		AutoSelectOne: true,

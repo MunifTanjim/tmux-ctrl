@@ -9,6 +9,8 @@ import (
 
 	"github.com/MunifTanjim/tmux-ctrl/internal/config"
 	"github.com/MunifTanjim/tmux-ctrl/internal/tmux"
+	"github.com/MunifTanjim/tmux-ctrl/internal/tui"
+	"github.com/MunifTanjim/tmux-ctrl/internal/util"
 )
 
 // hidden_session_name is the holding session where hidden panes are stashed.
@@ -25,6 +27,9 @@ const (
 	paneMoveTargetOption = "@tmux_ctrl_pane_move_target"
 	// paneMoveDirectionOption ferries the direction chosen in the display-menu picker.
 	paneMoveDirectionOption = "@tmux_ctrl_pane_move_direction"
+	// paneShowSelectionOption ferries the hidden-pane ref chosen in the
+	// display-menu fallback picker (used when fzf is unavailable).
+	paneShowSelectionOption = "@tmux_ctrl_pane_show_selection"
 )
 
 // hiddenPane describes a pane stashed in the hidden holding session.
@@ -128,6 +133,92 @@ func listHiddenPanes(winLoc string) ([]hiddenPane, error) {
 	}
 
 	return panes, nil
+}
+
+// selectHiddenPane lets the user pick a pane from panes, returning its Ref. It
+// uses the fzf picker when fzf is available and falls back to a tmux
+// display-menu otherwise. An empty Ref means the picker was cancelled.
+func selectHiddenPane(panes []hiddenPane) (string, error) {
+	if len(panes) == 1 {
+		return panes[0].Ref, nil
+	}
+
+	if util.HasTool("fzf") {
+		selected, err := tui.NewFZFSearch(tui.FZFSearchConfig[hiddenPane]{
+			Header:        "Select pane to show",
+			Items:         panes,
+			AutoSelectOne: true,
+			Fields: func(pane hiddenPane) []string {
+				fields := []string{hidden_session_name + ":" + pane.Ref}
+				if len(pane.Tags) > 0 {
+					fields = append(fields, strings.Join(pane.Tags, ","))
+				}
+				fields = append(fields, pane.Command, pane.Path)
+				return fields
+			},
+			FieldDisplayRange: "2..",
+			PreviewCommand:    "tmux capture-pane -p -e -t {1}",
+		}).Run()
+		if err != nil {
+			if errors.Is(err, tui.ErrCancelled) || errors.Is(err, tui.ErrNoMatch) {
+				return "", nil
+			}
+			return "", err
+		}
+		if len(selected) == 0 {
+			return "", nil
+		}
+		return selected[0].Ref, nil
+	}
+
+	return pickHiddenPane(panes)
+}
+
+// pickHiddenPane shows a display-menu of panes and returns the chosen pane's
+// Ref, mirroring pickDirection's option-ferrying IPC. An empty Ref means the
+// menu was cancelled.
+func pickHiddenPane(panes []hiddenPane) (string, error) {
+	if err := tmux.SetGlobalOption(paneShowSelectionOption, ""); err != nil {
+		return "", err
+	}
+	defer tmux.UnsetGlobalOption(paneShowSelectionOption)
+
+	items := make([]tmux.DisplayMenuItem, 0, len(panes))
+	for i, pane := range panes {
+		items = append(items, tmux.DisplayMenuItem{
+			Name:    hiddenPaneMenuLabel(pane),
+			Key:     menuKey(i),
+			Command: "set-option -g " + paneShowSelectionOption + " " + pane.Ref,
+		})
+	}
+
+	if err := tmux.DisplayMenu(&tmux.DisplayMenuParams{Title: "Show pane", Items: items}); err != nil {
+		return "", err
+	}
+
+	return tmux.DisplayMessage("#{"+paneShowSelectionOption+"}", &tmux.DisplayMessageParams{})
+}
+
+// hiddenPaneMenuLabel renders a single-line display-menu label for a hidden pane.
+func hiddenPaneMenuLabel(pane hiddenPane) string {
+	parts := []string{pane.Ref}
+	if len(pane.Tags) > 0 {
+		parts = append(parts, "["+strings.Join(pane.Tags, ",")+"]")
+	}
+	parts = append(parts, pane.Command, pane.Path)
+	return strings.Join(parts, "  ")
+}
+
+// menuKeys is the pool of single-character display-menu mnemonics, assigned in order.
+const menuKeys = "123456789abcdefghijklmnopqrstuvwxyz"
+
+// menuKey returns the mnemonic key for the i-th menu item, or "" once the pool
+// is exhausted.
+func menuKey(i int) string {
+	if i < len(menuKeys) {
+		return string(menuKeys[i])
+	}
+	return ""
 }
 
 // hidePane moves a pane out of the visible layout into the hidden holding
