@@ -23,6 +23,8 @@ const (
 	// avoids corruption: display-panes only substitutes the `%%` token and
 	// otherwise mangles stray `%` characters (and pane ids start with `%`).
 	paneMoveTargetOption = "@tmux_ctrl_pane_move_target"
+	// paneMoveDirectionOption ferries the direction chosen in the display-menu picker.
+	paneMoveDirectionOption = "@tmux_ctrl_pane_move_direction"
 )
 
 // hiddenPane describes a pane stashed in the hidden holding session.
@@ -198,6 +200,87 @@ var paneDirections = []string{
 
 // directionsHint is the comma-separated direction list used in flag help text.
 var directionsHint = strings.Join(paneDirections, ", ")
+
+// edgeMenuPrefix marks an edge placement in the ferried value (e.g. "edge:left").
+const edgeMenuPrefix = "edge:"
+
+// moveMenuGroups lists the interactive move menu placements, grouped (relative, edge, corner) with a separator between groups.
+var moveMenuGroups = [][]struct {
+	label, key, dir string
+	edge            bool
+}{
+	{
+		{"Left", "h", "left", false},
+		{"Bottom", "j", "bottom", false},
+		{"Top", "k", "top", false},
+		{"Right", "l", "right", false},
+	},
+	{
+		{"Left Edge", "H", "left", true},
+		{"Bottom Edge", "J", "bottom", true},
+		{"Top Edge", "K", "top", true},
+		{"Right Edge", "L", "right", true},
+	},
+	{
+		{"Top-Left", "y", "top-left", true},
+		{"Top-Right", "o", "top-right", true},
+		{"Bottom-Left", "b", "bottom-left", true},
+		{"Bottom-Right", ".", "bottom-right", true},
+	},
+}
+
+// pickDirection shows a display-menu of placements and returns the chosen direction and whether it
+// is an edge placement. With edgeOnly, only edge/corner placements are offered. Returns an empty
+// direction (and nil error) when the menu is cancelled.
+func pickDirection(edgeOnly bool) (direction string, edge bool, err error) {
+	if err := tmux.SetGlobalOption(paneMoveDirectionOption, ""); err != nil {
+		return "", false, err
+	}
+	defer tmux.UnsetGlobalOption(paneMoveDirectionOption)
+
+	items := make([]tmux.DisplayMenuItem, 0)
+	for _, group := range moveMenuGroups {
+		groupItems := make([]tmux.DisplayMenuItem, 0, len(group))
+		for _, mi := range group {
+			if edgeOnly && !mi.edge {
+				continue
+			}
+			value := mi.dir
+			if mi.edge {
+				value = edgeMenuPrefix + mi.dir
+			}
+			groupItems = append(groupItems, tmux.DisplayMenuItem{
+				Name:    mi.label,
+				Key:     mi.key,
+				Command: "set-option -g " + paneMoveDirectionOption + " " + value,
+			})
+		}
+		if len(groupItems) == 0 {
+			continue
+		}
+		if len(items) > 0 {
+			items = append(items, tmux.DisplayMenuItem{}) // separator between groups
+		}
+		items = append(items, groupItems...)
+	}
+
+	if err := tmux.DisplayMenu(&tmux.DisplayMenuParams{Title: "Direction", Items: items}); err != nil {
+		return "", false, err
+	}
+
+	chosen, err := tmux.DisplayMessage("#{"+paneMoveDirectionOption+"}", &tmux.DisplayMessageParams{})
+	if err != nil {
+		return "", false, err
+	}
+	if chosen == "" {
+		return "", false, nil
+	}
+	if dir := strings.TrimPrefix(chosen, edgeMenuPrefix); dir != chosen {
+		return dir, true, nil
+	}
+
+	return chosen, isCornerDirection(chosen), nil
+}
 
 // paneSplitFlags maps a direction (bottom/top/right/left) to join-pane split
 // orientation: whether the split is vertical/horizontal and whether the source

@@ -127,6 +127,35 @@ func DisplayPanes(params *DisplayPanesParams) error {
 	return run(args...)
 }
 
+type DisplayMenuItem struct {
+	Name    string // label shown in the menu
+	Key     string // mnemonic key (underlined in Name by tmux)
+	Command string // tmux command run when the item is chosen
+}
+
+type DisplayMenuParams struct {
+	Title string
+	Items []DisplayMenuItem
+}
+
+// DisplayMenu runs `display-menu`, showing a popup menu; the Command of the
+// chosen item is executed by tmux on selection.
+func DisplayMenu(params *DisplayMenuParams) error {
+	args := []string{"display-menu"}
+	if params.Title != "" {
+		args = append(args, "-T", params.Title)
+	}
+	for _, item := range params.Items {
+		if item.Name == "" {
+			args = append(args, "") // separator line
+			continue
+		}
+		args = append(args, item.Name, item.Key, item.Command)
+	}
+
+	return run(args...)
+}
+
 type SplitWindowParams struct {
 	TargetPane     string
 	Size           string

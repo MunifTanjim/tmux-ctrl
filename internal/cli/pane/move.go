@@ -27,6 +27,18 @@ func MoveCommand() *cobra.Command {
 				return err
 			}
 
+			if direction == "" {
+				var pickedEdge bool
+				direction, pickedEdge, err = pickDirection(edge)
+				if err != nil {
+					return err
+				}
+				if direction == "" {
+					return nil
+				}
+				edge = edge || pickedEdge
+			}
+
 			// Corners are inherently an edge placement; assume --edge for them.
 			if edge || isCornerDirection(direction) {
 				return movePaneToEdge(paneID, direction, size)
@@ -37,7 +49,7 @@ func MoveCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&paneID, "pane-id", "p", "", "pane to move (default: current pane)")
-	cmd.Flags().StringVarP(&direction, "direction", "d", "bottom", "placement direction: "+directionsHint)
+	cmd.Flags().StringVarP(&direction, "direction", "d", "", "placement direction: "+directionsHint)
 	cmd.Flags().StringVar(&size, "size", "", "size of the resulting split (lines, columns, percentage, or 0<fraction<1 as percentage)")
 	cmd.Flags().StringVar(&target, "target", "", "target pane id (skips the picker; ignored with --edge)")
 	cmd.Flags().BoolVar(&edge, "edge", false, "move to the window edge in --direction instead of picking a target pane")
