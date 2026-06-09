@@ -111,6 +111,9 @@ func listHiddenPanes(winLoc string) ([]hiddenPane, error) {
 	panes := make([]hiddenPane, 0, len(lines))
 	for _, line := range lines {
 		fields := strings.SplitN(line, "\t", 4)
+		if len(fields) == 3 {
+			fields = append(fields, "")
+		}
 		if len(fields) < 4 {
 			continue
 		}
