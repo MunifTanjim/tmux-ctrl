@@ -156,6 +156,18 @@ func DisplayMenu(params *DisplayMenuParams) error {
 	return run(args...)
 }
 
+// menuKeys is the pool of single-character display-menu mnemonics, assigned in order.
+const menuKeys = "123456789abcdefghijklmnopqrstuvwxyz"
+
+// MenuKey returns the mnemonic key for the i-th menu item, or "" once the pool
+// is exhausted.
+func MenuKey(i int) string {
+	if i < len(menuKeys) {
+		return string(menuKeys[i])
+	}
+	return ""
+}
+
 type SplitWindowParams struct {
 	TargetPane     string
 	Size           string

@@ -189,7 +189,7 @@ func pickHiddenPane(panes []hiddenPane) (string, error) {
 	for i, pane := range panes {
 		items = append(items, tmux.DisplayMenuItem{
 			Name:    hiddenPaneMenuLabel(pane),
-			Key:     menuKey(i),
+			Key:     tmux.MenuKey(i),
 			Command: "set-option -g " + paneShowSelectionOption + " " + pane.Ref,
 		})
 	}
@@ -209,18 +209,6 @@ func hiddenPaneMenuLabel(pane hiddenPane) string {
 	}
 	parts = append(parts, pane.Command, pane.Path)
 	return strings.Join(parts, "  ")
-}
-
-// menuKeys is the pool of single-character display-menu mnemonics, assigned in order.
-const menuKeys = "123456789abcdefghijklmnopqrstuvwxyz"
-
-// menuKey returns the mnemonic key for the i-th menu item, or "" once the pool
-// is exhausted.
-func menuKey(i int) string {
-	if i < len(menuKeys) {
-		return string(menuKeys[i])
-	}
-	return ""
 }
 
 // hidePane moves a pane out of the visible layout into the hidden holding
