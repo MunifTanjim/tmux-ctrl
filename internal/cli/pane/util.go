@@ -20,16 +20,13 @@ const hidden_session_name = config.HiddenSessionName
 const (
 	// paneTagsOption holds a pane's comma-separated tags (see `pane tag`).
 	paneTagsOption = "@tmux_ctrl_pane_tags"
-	// paneMoveTargetOption ferries the pane id chosen in the display-panes picker
-	// back to this process. Keeping pane ids out of the display-panes template
-	// avoids corruption: display-panes only substitutes the `%%` token and
-	// otherwise mangles stray `%` characters (and pane ids start with `%`).
+	// paneMoveTargetOption passes the pane id chosen in the display-panes picker.
 	paneMoveTargetOption = "@tmux_ctrl_pane_move_target"
-	// paneMoveDirectionOption ferries the direction chosen in the display-menu picker.
+	// paneMoveDirectionOption passes the direction chosen in the display-menu picker.
 	paneMoveDirectionOption = "@tmux_ctrl_pane_move_direction"
-	// paneSwapTargetOption ferries the pane id chosen for `pane swap`.
+	// paneSwapTargetOption passes the pane id chosen for `pane swap`.
 	paneSwapTargetOption = "@tmux_ctrl_pane_swap_target"
-	// paneShowSelectionOption ferries the hidden-pane ref chosen in the
+	// paneShowSelectionOption passes the hidden-pane ref chosen in the
 	// display-menu fallback picker (used when fzf is unavailable).
 	paneShowSelectionOption = "@tmux_ctrl_pane_show_selection"
 )
@@ -85,9 +82,7 @@ func hiddenWindowIndex(windowLoc string) (string, error) {
 	return "", nil
 }
 
-// hiddenPaneLines runs list-panes with the given format against the hidden window
-// for winLoc, returning the raw lines. Returns nil when the hidden session or its
-// window for winLoc does not exist.
+// hiddenPaneLines lists panes in the hidden window for winLoc, or nil if it does not exist.
 func hiddenPaneLines(winLoc, format string) ([]string, error) {
 	if !tmux.HasSession(&tmux.HasSessionParams{TargetSession: hidden_session_name}) {
 		return nil, nil
@@ -137,9 +132,7 @@ func listHiddenPanes(winLoc string) ([]hiddenPane, error) {
 	return panes, nil
 }
 
-// selectHiddenPane lets the user pick a pane from panes, returning its Ref. It
-// uses the fzf picker when fzf is available and falls back to a tmux
-// display-menu otherwise. An empty Ref means the picker was cancelled.
+// selectHiddenPane lets the user pick a pane, returning its Ref (empty if cancelled).
 func selectHiddenPane(panes []hiddenPane) (string, error) {
 	if len(panes) == 1 {
 		return panes[0].Ref, nil
@@ -176,9 +169,7 @@ func selectHiddenPane(panes []hiddenPane) (string, error) {
 	return pickHiddenPane(panes)
 }
 
-// pickHiddenPane shows a display-menu of panes and returns the chosen pane's
-// Ref, mirroring pickDirection's option-ferrying IPC. An empty Ref means the
-// menu was cancelled.
+// pickHiddenPane shows a display-menu of panes and returns the chosen Ref (empty if cancelled).
 func pickHiddenPane(panes []hiddenPane) (string, error) {
 	if err := tmux.SetGlobalOption(paneShowSelectionOption, ""); err != nil {
 		return "", err
@@ -282,12 +273,11 @@ var paneDirections = []string{
 // directionsHint is the comma-separated direction list used in flag help text.
 var directionsHint = strings.Join(paneDirections, ", ")
 
-// swapDirection is a `pane move` placement that swaps the pane with a target
-// pane (swap-pane) instead of joining next to it. It is intentionally absent
-// from paneDirections, which is shared with `pane show` (which cannot swap).
+// swapDirection is a `pane move` placement, intentionally absent
+// from paneDirections, which is shared with `pane show`.
 const swapDirection = "swap"
 
-// edgeMenuPrefix marks an edge placement in the ferried value (e.g. "edge:left").
+// edgeMenuPrefix marks an edge placement in the passed-back value (e.g. "edge:left").
 const edgeMenuPrefix = "edge:"
 
 // moveMenuGroups lists the interactive move menu placements, grouped (relative, edge, corner) with a separator between groups.
@@ -786,7 +776,7 @@ func movePaneSwap(srcPaneID, target string) error {
 }
 
 // pickTargetPane shows the numbered display-panes picker and returns the chosen
-// pane id (empty if cancelled), ferrying the selection through option. The id is
+// pane id (empty if cancelled), passing the selection back through option. The id is
 // kept out of the template since display-panes only substitutes the `%%` token
 // and mangles other `%` characters.
 func pickTargetPane(option string) (string, error) {

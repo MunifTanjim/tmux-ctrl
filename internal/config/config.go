@@ -10,8 +10,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// KnownKeys lists config keys offered for shell completion. Extend as commands
-// introduce new configuration.
+// KnownKeys lists config keys offered for shell completion.
 var KnownKeys = []string{}
 
 func Get[T any](key string) T {
