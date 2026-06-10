@@ -7,15 +7,13 @@ import (
 	"github.com/MunifTanjim/tmux-ctrl/internal/shell"
 )
 
-// run executes a tmux subcommand for its side effects, surfacing tmux's stderr
-// on failure.
+// run executes a tmux subcommand, surfacing stderr on failure.
 func run(args ...string) error {
 	_, err := query(args...)
 	return err
 }
 
-// query runs a tmux subcommand and returns its trimmed stdout, surfacing
-// tmux's stderr on failure.
+// query runs a tmux subcommand and returns trimmed stdout, surfacing stderr on failure.
 func query(args ...string) (string, error) {
 	cmd := shell.NewCommand("tmux", args...)
 	if err := cmd.Run(); err != nil {

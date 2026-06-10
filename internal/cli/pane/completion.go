@@ -47,7 +47,6 @@ var directionDescriptions = map[string]string{
 	"bottom-right": "dock to the bottom-right corner",
 }
 
-// directionCompletion offers the placement directions with descriptions.
 func directionCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	out := make([]string, 0, len(paneDirections))
 	for _, dir := range paneDirections {
@@ -56,8 +55,7 @@ func directionCompletion(cmd *cobra.Command, args []string, toComplete string) (
 	return out, cobra.ShellCompDirectiveNoFileComp
 }
 
-// collectTags returns the distinct tags in use across every pane on the server,
-// in first-seen order. tmux query failures yield no tags.
+// collectTags returns the distinct tags in use across every pane, in first-seen order.
 func collectTags() []string {
 	lines, err := tmux.ListPanes(&tmux.ListPanesParams{
 		All:    true,
@@ -78,7 +76,6 @@ func collectTags() []string {
 	return tags
 }
 
-// without returns tags omitting any value present in exclude.
 func without(tags, exclude []string) []string {
 	out := make([]string, 0, len(tags))
 	for _, tag := range tags {
@@ -89,7 +86,6 @@ func without(tags, exclude []string) []string {
 	return out
 }
 
-// tagFlagCompletion offers known tags for a --tag flag value.
 func tagFlagCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	return collectTags(), cobra.ShellCompDirectiveNoFileComp
 }
