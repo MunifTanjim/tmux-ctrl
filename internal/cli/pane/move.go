@@ -1,6 +1,8 @@
 package pane
 
 import (
+	"errors"
+
 	"github.com/spf13/cobra"
 )
 
@@ -39,6 +41,16 @@ func MoveCommand() *cobra.Command {
 				edge = edge || pickedEdge
 			}
 
+			if direction == swapDirection {
+				if edge {
+					return errors.New("direction swap cannot be combined with --edge")
+				}
+				if size != "" {
+					return errors.New("direction swap cannot be combined with --size")
+				}
+				return movePaneSwap(paneID, target)
+			}
+
 			// Corners are inherently an edge placement; assume --edge for them.
 			if edge || isCornerDirection(direction) {
 				return movePaneToEdge(paneID, direction, size)
@@ -49,7 +61,7 @@ func MoveCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&paneID, "pane-id", "p", "", "pane to move (default: current pane)")
-	cmd.Flags().StringVarP(&direction, "direction", "d", "", "placement direction: "+directionsHint)
+	cmd.Flags().StringVarP(&direction, "direction", "d", "", "placement direction: "+directionsHint+", "+swapDirection)
 	cmd.Flags().StringVar(&size, "size", "", "size of the resulting split (lines, columns, percentage, or 0<fraction<1 as percentage)")
 	cmd.Flags().StringVar(&target, "target", "", "target pane id (skips the picker; ignored with --edge)")
 	cmd.Flags().BoolVar(&edge, "edge", false, "move to the window edge in --direction instead of picking a target pane")
@@ -58,7 +70,7 @@ func MoveCommand() *cobra.Command {
 
 	_ = cmd.RegisterFlagCompletionFunc("pane-id", paneCompletion(false))
 	_ = cmd.RegisterFlagCompletionFunc("target", paneCompletion(false))
-	_ = cmd.RegisterFlagCompletionFunc("direction", directionCompletion)
+	_ = cmd.RegisterFlagCompletionFunc("direction", moveDirectionCompletion)
 	_ = cmd.RegisterFlagCompletionFunc("size", noFileCompletion)
 
 	return cmd

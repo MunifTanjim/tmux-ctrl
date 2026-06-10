@@ -56,6 +56,14 @@ func directionCompletion(cmd *cobra.Command, args []string, toComplete string) (
 	return out, cobra.ShellCompDirectiveNoFileComp
 }
 
+// moveDirectionCompletion offers the shared placement directions plus swap, which
+// is exclusive to `pane move`.
+func moveDirectionCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	out, _ := directionCompletion(cmd, args, toComplete)
+	out = append(out, swapDirection+"\t"+"swap with another pane")
+	return out, cobra.ShellCompDirectiveNoFileComp
+}
+
 // collectTags returns the distinct tags in use across every pane on the server,
 // in first-seen order. tmux query failures yield no tags.
 func collectTags() []string {

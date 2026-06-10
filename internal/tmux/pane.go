@@ -210,6 +210,28 @@ func SplitWindow(params *SplitWindowParams) (string, error) {
 	return query(args...)
 }
 
+type SwapPaneParams struct {
+	SrcPane  string // -s
+	DstPane  string // -t
+	Detached bool   // -d: keep the active pane (don't follow the swap)
+}
+
+// SwapPane runs `swap-pane`.
+func SwapPane(params *SwapPaneParams) error {
+	args := []string{"swap-pane"}
+	if params.Detached {
+		args = append(args, "-d")
+	}
+	if params.SrcPane != "" {
+		args = append(args, "-s", params.SrcPane)
+	}
+	if params.DstPane != "" {
+		args = append(args, "-t", params.DstPane)
+	}
+
+	return run(args...)
+}
+
 type BreakPaneParams struct {
 	SrcPane    string
 	DstWindow  string
