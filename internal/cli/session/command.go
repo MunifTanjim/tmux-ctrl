@@ -10,6 +10,7 @@ func Command() *cobra.Command {
 
 	cmd.AddCommand(NextCommand())
 	cmd.AddCommand(PrevCommand())
+	cmd.AddCommand(SwitchCommand())
 
 	return cmd
 }
