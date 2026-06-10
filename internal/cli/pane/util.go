@@ -27,6 +27,8 @@ const (
 	paneMoveTargetOption = "@tmux_ctrl_pane_move_target"
 	// paneMoveDirectionOption ferries the direction chosen in the display-menu picker.
 	paneMoveDirectionOption = "@tmux_ctrl_pane_move_direction"
+	// paneSwapTargetOption ferries the pane id chosen for `pane swap`.
+	paneSwapTargetOption = "@tmux_ctrl_pane_swap_target"
 	// paneShowSelectionOption ferries the hidden-pane ref chosen in the
 	// display-menu fallback picker (used when fzf is unavailable).
 	paneShowSelectionOption = "@tmux_ctrl_pane_show_selection"
@@ -749,19 +751,7 @@ func movePaneRelative(srcPaneID, target, direction, size string) error {
 		return err
 	}
 
-	if err := tmux.SetGlobalOption(paneMoveTargetOption, ""); err != nil {
-		return err
-	}
-	defer tmux.UnsetGlobalOption(paneMoveTargetOption)
-
-	if err := tmux.DisplayPanes(&tmux.DisplayPanesParams{
-		Duration: "0",
-		Template: "set-option -g " + paneMoveTargetOption + " '%%'",
-	}); err != nil {
-		return err
-	}
-
-	chosenTarget, err := tmux.DisplayMessage("#{"+paneMoveTargetOption+"}", &tmux.DisplayMessageParams{})
+	chosenTarget, err := pickTargetPane(paneMoveTargetOption)
 	if err != nil {
 		return err
 	}
@@ -771,6 +761,26 @@ func movePaneRelative(srcPaneID, target, direction, size string) error {
 	}
 
 	return joinPaneInDirection(srcPaneID, chosenTarget, direction, size, false)
+}
+
+// pickTargetPane shows the numbered display-panes picker and returns the chosen
+// pane id (empty if cancelled), ferrying the selection through option. The id is
+// kept out of the template since display-panes only substitutes the `%%` token
+// and mangles other `%` characters.
+func pickTargetPane(option string) (string, error) {
+	if err := tmux.SetGlobalOption(option, ""); err != nil {
+		return "", err
+	}
+	defer tmux.UnsetGlobalOption(option)
+
+	if err := tmux.DisplayPanes(&tmux.DisplayPanesParams{
+		Duration: "0",
+		Template: "set-option -g " + option + " '%%'",
+	}); err != nil {
+		return "", err
+	}
+
+	return tmux.DisplayMessage("#{"+option+"}", &tmux.DisplayMessageParams{})
 }
 
 // movePaneToEdge moves srcPaneID to the window edge in the given direction so it

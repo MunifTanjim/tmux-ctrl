@@ -11,6 +11,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(HideCommand())
 	cmd.AddCommand(ShowCommand())
 	cmd.AddCommand(MoveCommand())
+	cmd.AddCommand(SwapCommand())
 	cmd.AddCommand(SplitCommand())
 	cmd.AddCommand(StateCommand())
 	cmd.AddCommand(ListCommand())
