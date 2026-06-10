@@ -13,6 +13,7 @@ func Command() *cobra.Command {
 	cmd.AddCommand(MoveCommand())
 	cmd.AddCommand(SwapCommand())
 	cmd.AddCommand(SplitCommand())
+	cmd.AddCommand(ExtractCommand())
 	cmd.AddCommand(StateCommand())
 	cmd.AddCommand(ListCommand())
 	cmd.AddCommand(TagCommand())

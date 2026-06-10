@@ -11,7 +11,10 @@ import (
 )
 
 // KnownKeys lists config keys offered for shell completion.
-var KnownKeys = []string{}
+var KnownKeys = []string{
+	"extract.patterns",
+	"extract.hint_alphabet",
+}
 
 func Get[T any](key string) T {
 	var zero T

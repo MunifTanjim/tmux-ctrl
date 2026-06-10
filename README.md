@@ -55,6 +55,30 @@ tmux-ctrl completion install
 tmux-ctrl completion zsh > "${fpath[1]}/_tmux-ctrl"
 ```
 
+## Usage
+
+### Extract (hint overlay)
+
+`tmux-ctrl pane extract` finds tokens (URLs, paths, git SHAs, and any
+config-defined patterns) in a pane and prints the selection. With `--hint` it
+shows a tmux-thumbs-style overlay: the pane content is dimmed and a hint key is
+drawn at the start of each match; type the hint to select it.
+
+Bind it to a tmux key so the overlay pops up over the current pane and copies the
+pick to the tmux buffer:
+
+```tmux
+bind-key F display-popup -E -B \
+  -x '#{pane_left}' -y '#{pane_top}' -w '#{pane_width}' -h '#{pane_height}' \
+  "tmux-ctrl pane extract --hint --copy -p '#{pane_id}'"
+```
+
+Run directly in a pane to print instead (composable):
+
+```sh
+tmux-ctrl pane extract --hint | pbcopy
+```
+
 ## License
 
 Licensed under the MIT License. Check the [LICENSE](./LICENSE) file for details.
