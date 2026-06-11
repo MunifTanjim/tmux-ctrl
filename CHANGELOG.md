@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.4](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.3...0.0.4) (2026-06-11)
+
+
+### Features
+
+* **pane:** add command - extract ([2534382](https://github.com/MunifTanjim/tmux-ctrl/commit/253438203bfb99d655e37fe9f5ccc832ea07be9d))
+* **pane:** add direction picker for move ([4b981dc](https://github.com/MunifTanjim/tmux-ctrl/commit/4b981dc72941281a837db7561e1d4d0b5e3ebe63))
+* **pane:** enhance ux for show ([d3f572b](https://github.com/MunifTanjim/tmux-ctrl/commit/d3f572b775cda959239ae494168132376756773d))
+* **pane:** support swap for move ([ea1b928](https://github.com/MunifTanjim/tmux-ctrl/commit/ea1b928f49e40faa0db63133787b1aac505db973))
+* **session:** add command - switch ([de95f6d](https://github.com/MunifTanjim/tmux-ctrl/commit/de95f6dd322a3b1daa820d40bfb67f6ae7170eca))
+* **tmux:** add plugin ([8e4e9df](https://github.com/MunifTanjim/tmux-ctrl/commit/8e4e9df563679c230443e5eef8863871d8a7ca6c))
+
 ## [0.0.3](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.2...0.0.3) (2026-06-09)
 
 
