@@ -6,12 +6,16 @@ import (
 	"time"
 
 	"github.com/MunifTanjim/tmux-ctrl/internal/util"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 	"go.yaml.in/yaml/v3"
 )
 
 // KnownKeys lists config keys offered for shell completion.
-var KnownKeys = []string{}
+var KnownKeys = []string{
+	"extract.patterns",
+	"extract.hint_alphabet",
+}
 
 func Get[T any](key string) T {
 	var zero T
@@ -51,10 +55,11 @@ func Get[T any](key string) T {
 	case map[string][]string:
 		return any(viper.GetStringMapStringSlice(key)).(T)
 	default:
-		if v, ok := viper.Get(key).(T); ok {
-			return v
+		var value T
+		if err := viper.UnmarshalKey(key, &value, viper.DecodeHook(mapstructure.TextUnmarshallerHookFunc())); err != nil {
+			return zero // never return a partially-decoded value
 		}
-		return zero
+		return value
 	}
 }
 

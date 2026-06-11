@@ -222,6 +222,24 @@ func SplitWindow(params *SplitWindowParams) (string, error) {
 	return query(args...)
 }
 
+type CapturePaneParams struct {
+	TargetPane string
+	Join       bool // -J: rejoin wrapped lines (so a wrapped URL stays one token)
+}
+
+// CapturePane runs `capture-pane -p` and returns the visible pane content.
+func CapturePane(params *CapturePaneParams) (string, error) {
+	args := []string{"capture-pane", "-p"}
+	if params.Join {
+		args = append(args, "-J")
+	}
+	if params.TargetPane != "" {
+		args = append(args, "-t", params.TargetPane)
+	}
+
+	return query(args...)
+}
+
 type SwapPaneParams struct {
 	SrcPane  string // -s
 	DstPane  string // -t
