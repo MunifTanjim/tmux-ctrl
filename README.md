@@ -55,6 +55,45 @@ tmux-ctrl completion install
 tmux-ctrl completion zsh > "${fpath[1]}/_tmux-ctrl"
 ```
 
+## Tmux Plugin
+
+Install with [TPM](https://github.com/tmux-plugins/tpm) — add to `~/.tmux.conf`:
+
+```tmux
+set -g @plugin 'MunifTanjim/tmux-ctrl'
+```
+
+### Configuration
+
+All options are optional; their defaults are shown below. Override any of them
+before the `@plugin` line.
+
+| Option                       | Default              | Description                                                     |
+| ---------------------------- | -------------------- | --------------------------------------------------------------- |
+| `@ctrl_command`              | `tmux-ctrl`          | The `tmux-ctrl` binary to invoke.                               |
+| `@ctrl_default_keybindings`  | `on`                 | Set to `off` to disable all default bindings.                   |
+| `@ctrl_session_prev_key`     | `(`                  | `prefix + (` — go to the previous session.                      |
+| `@ctrl_session_next_key`     | `)`                  | `prefix + )` — go to the next session.                          |
+| `@ctrl_pane_move_key`        | `M`                  | `prefix + M` — move the current pane.                           |
+| `@ctrl_pane_extract_key`     | `Space`              | `prefix + Space` — extract tokens from the pane via an overlay. |
+| `@ctrl_pane_extract_command` | `tmux load-buffer -` | Command the extracted token is piped into.                      |
+
+Set any key option to an empty string to disable that single binding:
+
+```tmux
+set -g @ctrl_pane_move_key ''
+```
+
+Example:
+
+```tmux
+set -g @ctrl_command 'tmux-ctrl'
+set -g @ctrl_session_prev_key 'P'
+set -g @ctrl_session_next_key 'N'
+
+set -g @plugin 'MunifTanjim/tmux-ctrl'
+```
+
 ## License
 
 Licensed under the MIT License. Check the [LICENSE](./LICENSE) file for details.
