@@ -44,7 +44,7 @@ jobs:
           TAG_NAME: ${{ inputs.tag }}
         run: |
           mkdir -p build
-          go build -ldflags "-X github.com/MunifTanjim/tmux-ctrl/internal/version.Version=${TAG_NAME}" -o build/tmux-ctrl-${TAG_NAME}-${{ matrix.goos }}-${{ matrix.goarch }} .
+          go build -trimpath -ldflags "-s -w -X github.com/MunifTanjim/tmux-ctrl/internal/version.Version=${TAG_NAME}" -o build/tmux-ctrl-${TAG_NAME}-${{ matrix.goos }}-${{ matrix.goarch }} .
       - name: Upload Release Asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

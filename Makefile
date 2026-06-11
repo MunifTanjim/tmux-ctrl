@@ -16,7 +16,7 @@ lint:
 
 build:
 	mkdir -p $(BUILD_DIR)
-	go build -ldflags "-X github.com/MunifTanjim/tmux-ctrl/internal/version.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME) .
+	go build -trimpath -ldflags "-s -w -X github.com/MunifTanjim/tmux-ctrl/internal/version.Version=$(VERSION)" -o $(BUILD_DIR)/$(BINARY_NAME) .
 
 install: build uninstall
 	mkdir -p $(INSTALL_DIR)
