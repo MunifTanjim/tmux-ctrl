@@ -8,6 +8,7 @@ func Command() *cobra.Command {
 		Short: "Manage tmux sessions",
 	}
 
+	cmd.AddCommand(ListCommand())
 	cmd.AddCommand(NextCommand())
 	cmd.AddCommand(PrevCommand())
 	cmd.AddCommand(SwitchCommand())
