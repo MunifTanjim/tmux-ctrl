@@ -8,11 +8,10 @@ import (
 )
 
 func Lines(a ...any) string {
-	lines := make([]string, len(a)+1)
+	lines := make([]string, len(a))
 	for i, v := range a {
 		lines[i] = fmt.Sprint(v)
 	}
-	lines[len(a)] = ""
 	return strings.Join(lines, "\n")
 }
 

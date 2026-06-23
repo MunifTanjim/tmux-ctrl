@@ -36,8 +36,8 @@ func ExtractCommand() *cobra.Command {
 				return err
 			}
 
-			lines := strings.Split(content, "\n")
-			matches := extract.Match(lines, patterns)
+			cLines := strings.Split(content, "\n")
+			matches := extract.Match(cLines, patterns)
 			if len(matches) == 0 {
 				tui.StdErrLn("No matches")
 				return nil
@@ -45,16 +45,19 @@ func ExtractCommand() *cobra.Command {
 
 			var values []string
 			if overlay {
-				values, err = extract.Pick(extract.PickerHintOverlay, lines, matches)
+				values, err = extract.Pick(extract.PickerHintOverlay, cLines, matches)
 			} else {
-				values, err = extract.Pick(extract.PickerSelect, lines, matches)
+				values, err = extract.Pick(extract.PickerSelect, cLines, matches)
 			}
 			if err != nil {
 				return err
 			}
-			for _, value := range values {
-				tui.StdOutLn(value)
+
+			lines := make([]any, len(values))
+			for i, value := range values {
+				lines[i] = value
 			}
+			tui.StdOut(tui.Lines(lines...))
 			return nil
 		},
 	}
