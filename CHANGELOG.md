@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.5](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.4...0.0.5) (2026-06-23)
+
+
+### Features
+
+* **session:** add command - list ([c910c7a](https://github.com/MunifTanjim/tmux-ctrl/commit/c910c7a00d9506a8366557e49d50a2f4395b4585))
+
+
+### Bug Fixes
+
+* **pane:** strip trailing newline for extract ([343d60a](https://github.com/MunifTanjim/tmux-ctrl/commit/343d60a622aff295f1a0fe1e5c8a4843a887527c))
+
 ## [0.0.4](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.3...0.0.4) (2026-06-11)
 
 
