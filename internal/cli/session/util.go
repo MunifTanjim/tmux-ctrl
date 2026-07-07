@@ -17,9 +17,14 @@ func listNames() ([]string, error) {
 		return nil, err
 	}
 
+	isHidden, err := config.HiddenSessionMatcher()
+	if err != nil {
+		return nil, err
+	}
+
 	var names []string
 	for _, name := range all {
-		if name == config.HiddenSessionName {
+		if isHidden(name) {
 			continue
 		}
 		names = append(names, name)
@@ -86,6 +91,11 @@ func listSessionInfos() ([]sessionInfo, error) {
 		return nil, err
 	}
 
+	isHidden, err := config.HiddenSessionMatcher()
+	if err != nil {
+		return nil, err
+	}
+
 	infos := make([]sessionInfo, 0, len(lines))
 	for _, line := range lines {
 		fields := strings.SplitN(line, "\t", 2)
@@ -93,7 +103,7 @@ func listSessionInfos() ([]sessionInfo, error) {
 			continue
 		}
 		name := fields[0]
-		if name == config.HiddenSessionName || name == current {
+		if isHidden(name) || name == current {
 			continue
 		}
 		infos = append(infos, sessionInfo{

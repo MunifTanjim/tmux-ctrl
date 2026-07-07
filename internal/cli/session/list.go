@@ -56,10 +56,15 @@ func listSessionLines(template string, includeHidden bool) ([]string, error) {
 		return nil, err
 	}
 
+	isHidden, err := config.HiddenSessionMatcher()
+	if err != nil {
+		return nil, err
+	}
+
 	filtered := make([]string, 0, len(lines))
 	for _, line := range lines {
 		name, rest, _ := strings.Cut(line, "\t")
-		if name == config.HiddenSessionName {
+		if isHidden(name) {
 			continue
 		}
 		filtered = append(filtered, rest)

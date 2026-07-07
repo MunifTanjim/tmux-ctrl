@@ -15,6 +15,7 @@ import (
 var KnownKeys = []string{
 	"extract.patterns",
 	"extract.hint_alphabet",
+	"session.hidden_name_pattern",
 }
 
 func Get[T any](key string) T {
