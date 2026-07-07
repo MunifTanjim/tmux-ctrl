@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.5](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.4...0.0.5) (2026-07-07)
+
+
+### Features
+
+* **session:** add --hidden flag to switch ([e76561c](https://github.com/MunifTanjim/tmux-ctrl/commit/e76561ceb7148e3531a11044e1af1d6a32eca9bd))
+* **session:** add command - list ([c910c7a](https://github.com/MunifTanjim/tmux-ctrl/commit/c910c7a00d9506a8366557e49d50a2f4395b4585))
+* **session:** add config session.hidden_name_pattern ([69d5d45](https://github.com/MunifTanjim/tmux-ctrl/commit/69d5d454d709fc4a7df69db699f31c4d2752b0fe))
+
+
+### Bug Fixes
+
+* **pane:** strip trailing newline for extract ([343d60a](https://github.com/MunifTanjim/tmux-ctrl/commit/343d60a622aff295f1a0fe1e5c8a4843a887527c))
+
 ## [0.0.4](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.3...0.0.4) (2026-06-11)
 
 
