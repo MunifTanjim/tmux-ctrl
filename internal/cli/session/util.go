@@ -77,8 +77,9 @@ type sessionInfo struct {
 	Windows string
 }
 
-// listSessionInfos returns switchable sessions, excluding the current and hidden ones
-func listSessionInfos() ([]sessionInfo, error) {
+// listSessionInfos returns switchable sessions, excluding the current one.
+// Unless includeHidden is set, the hidden session is dropped too.
+func listSessionInfos(includeHidden bool) ([]sessionInfo, error) {
 	lines, err := tmux.ListSessions(&tmux.ListSessionsParams{
 		Format: "#{session_name}\t#{session_windows}",
 	})
@@ -103,7 +104,7 @@ func listSessionInfos() ([]sessionInfo, error) {
 			continue
 		}
 		name := fields[0]
-		if isHidden(name) || name == current {
+		if name == current || (!includeHidden && isHidden(name)) {
 			continue
 		}
 		infos = append(infos, sessionInfo{
@@ -121,8 +122,8 @@ func sessionSummary(info sessionInfo) string {
 
 // switchInteractive shows a picker and switches to the chosen session. It uses
 // fzf when available and falls back to a tmux display-menu otherwise.
-func switchInteractive() error {
-	infos, err := listSessionInfos()
+func switchInteractive(includeHidden bool) error {
+	infos, err := listSessionInfos(includeHidden)
 	if err != nil {
 		return err
 	}

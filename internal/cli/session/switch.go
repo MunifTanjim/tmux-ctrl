@@ -6,7 +6,10 @@ import (
 )
 
 func SwitchCommand() *cobra.Command {
-	var target string
+	var (
+		target string
+		hidden bool
+	)
 
 	cmd := &cobra.Command{
 		Use:   "switch",
@@ -16,11 +19,12 @@ func SwitchCommand() *cobra.Command {
 			if target != "" {
 				return tmux.SwitchClient(&tmux.SwitchClientParams{TargetSession: target})
 			}
-			return switchInteractive()
+			return switchInteractive(hidden)
 		},
 	}
 
 	cmd.Flags().StringVar(&target, "target", "", "session to switch to")
+	cmd.Flags().BoolVar(&hidden, "hidden", false, "include the hidden session")
 
 	_ = cmd.RegisterFlagCompletionFunc("target", sessionNameCompletion)
 
@@ -29,7 +33,8 @@ func SwitchCommand() *cobra.Command {
 
 // sessionNameCompletion offers visible session names, each annotated with its window count.
 func sessionNameCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	infos, err := listSessionInfos()
+	hidden, _ := cmd.Flags().GetBool("hidden")
+	infos, err := listSessionInfos(hidden)
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
