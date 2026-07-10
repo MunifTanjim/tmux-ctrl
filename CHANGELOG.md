@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.0.6](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.5...0.0.6) (2026-07-10)
+
+
+### Features
+
+* auto ensure binary on tmux plugin load ([7689622](https://github.com/MunifTanjim/tmux-ctrl/commit/7689622d4b01468920ac6a4f0f51c58e055cef94))
+* install and upgrade without requiring gh ([dd65b8b](https://github.com/MunifTanjim/tmux-ctrl/commit/dd65b8b54fd4209fff81e5d0d6dea74e4f54d82b))
+* **pane:** extend extract patterns and support copy-mode ([a7375ea](https://github.com/MunifTanjim/tmux-ctrl/commit/a7375eac9b553e6cbb79280f993c1e7d0df252e6))
+
 ## [0.0.5](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.4...0.0.5) (2026-07-07)
 
 
