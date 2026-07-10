@@ -2,6 +2,8 @@
 
 set -e
 
+declare -r CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 get_option() { # <option> <default>
   local value
   if value="$(tmux show-option -gv "$1" 2>/dev/null)"; then
@@ -25,7 +27,7 @@ init_ctrl() {
   fi
 
   local cmd
-  cmd="$(get_option "${option_command}" "tmux-ctrl")"
+  cmd="$("${CURRENT_DIR}/scripts/ensure-command.sh" "$(get_option "${option_command}" "tmux-ctrl")")"
 
   local session_prev_key
   session_prev_key="$(get_option "${option_session_prev_key}" "(")"

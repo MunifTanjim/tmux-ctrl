@@ -55,6 +55,11 @@ Install with [TPM](https://github.com/tmux-plugins/tpm) — add to `~/.tmux.conf
 set -g @plugin 'MunifTanjim/tmux-ctrl'
 ```
 
+If `tmux-ctrl` isn't on your `PATH`, the plugin downloads the latest release to
+`~/.local/bin` in the background (needs `curl`, `wget`, or `gh`) and binds keys
+to that path. Skipped when `@ctrl_command` is set. On failure, keys do nothing —
+check `${TMPDIR:-/tmp}/tmux-ctrl-install.log`.
+
 ### Configuration
 
 All options are optional; their defaults are shown below. Override any of them
