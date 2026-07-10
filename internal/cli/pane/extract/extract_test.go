@@ -155,7 +155,7 @@ func TestPreparePatterns(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PreparePatterns(nil): %v", err)
 	}
-	if len(a) != len(builtinPatterns) || a[0].Name != "md-url" {
+	if len(a) != len(builtinPatterns) || a[0].Name != "command" {
 		t.Fatalf("unexpected default patterns, first=%q len=%d", a[0].Name, len(a))
 	}
 	b, _ := PreparePatterns(nil)
@@ -210,6 +210,48 @@ func TestExtractMatchesValues(t *testing.T) {
 			want:    []match{{Value: "src/main.go", Type: "path"}},
 		},
 		{
+			name:    "path with escaped space",
+			content: `edit /Users/foo/My\ Documents/file.txt now`,
+			pats:    builtinPatterns,
+			want:    []match{{Value: `/Users/foo/My\ Documents/file.txt`, Type: "path"}},
+		},
+		{
+			name:    "quoted path with space emits inner path",
+			content: `open "/Users/foo/My Documents/file.txt" ok`,
+			pats:    builtinPatterns,
+			want:    []match{{Value: "/Users/foo/My Documents/file.txt", Type: "quoted-path"}},
+		},
+		{
+			name:    "single-quoted path",
+			content: "cd '/tmp/a b/c' done",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "/tmp/a b/c", Type: "quoted-path"}},
+		},
+		{
+			name:    "iso date",
+			content: "due 2026-07-10 ok",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "2026-07-10", Type: "date"}},
+		},
+		{
+			name:    "iso datetime with space and offset",
+			content: "at 2026-07-10 14:30:00+02:00 done",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "2026-07-10 14:30:00+02:00", Type: "datetime"}},
+		},
+		{
+			name:    "iso datetime with T and Z",
+			content: "ts=2026-07-10T14:30:00Z end",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "2026-07-10T14:30:00Z", Type: "datetime"}},
+		},
+		{
+			name:    "uuid",
+			content: "id 550e8400-e29b-41d4-a716-446655440000 ok",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "550e8400-e29b-41d4-a716-446655440000", Type: "uuid"}},
+		},
+		{
 			name:    "git shas short and full",
 			content: "commit a1b2c3d then 0123456789abcdef0123456789abcdef01234567",
 			pats:    builtinPatterns,
@@ -241,6 +283,30 @@ func TestExtractMatchesValues(t *testing.T) {
 			content: "see Issue #42 now",
 			pats:    []*extractPattern{{Name: "issue", Pattern: re(`Issue #([0-9]+)`)}},
 			want:    []match{{Value: "42", Type: "issue"}},
+		},
+		{
+			name:    "shell command after prompt",
+			content: "❯ git status",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "git status", Type: "command"}},
+		},
+		{
+			name:    "shell command with leading status code",
+			content: "1 ❯ git push",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "git push", Type: "command"}},
+		},
+		{
+			name:    "shell command with dollar prompt claims whole line",
+			content: "  $ curl https://example.com/x",
+			pats:    builtinPatterns,
+			want:    []match{{Value: "curl https://example.com/x", Type: "command"}},
+		},
+		{
+			name:    "dollar without space is not a command",
+			content: "cost is $5 today",
+			pats:    builtinPatterns,
+			want:    nil,
 		},
 		{
 			name:    "no matches",

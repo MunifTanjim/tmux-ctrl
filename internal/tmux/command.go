@@ -15,6 +15,13 @@ func run(args ...string) error {
 
 // query runs a tmux subcommand and returns trimmed stdout, surfacing stderr on failure.
 func query(args ...string) (string, error) {
+	out, err := queryRaw(args...)
+	return strings.TrimSpace(out), err
+}
+
+// queryRaw is like query but returns stdout verbatim (e.g. keeping a captured
+// pane's first-line indentation that query would trim).
+func queryRaw(args ...string) (string, error) {
 	cmd := shell.NewCommand("tmux", args...)
 	if err := cmd.Run(); err != nil {
 		if stderr := cmd.StdErr().TrimSpace().String(); stderr != "" {
@@ -22,7 +29,7 @@ func query(args ...string) (string, error) {
 		}
 		return "", err
 	}
-	return cmd.StdOut().TrimSpace().String(), nil
+	return cmd.StdOut().String(), nil
 }
 
 // queryLines runs a tmux subcommand and returns its stdout split into lines.

@@ -47,13 +47,28 @@ func re(pattern string) *Regexp {
 // URL printed inside parentheses or at the end of a sentence).
 const urlTrailingTrim = `.,;:!?)]}>"'`
 
-// builtinPatterns are tried in order; the first to claim a span sets the type, so
-// md-url precedes url to claim the whole `[text](url)` and emit the inner URL (its
-// first capture group).
+// builtinPatterns are tried in order; the first to claim a span sets the type.
 var builtinPatterns = []*extractPattern{
+	// command: capture group 1 (prompt stripped) is the value. Claims the whole
+	// line first so tokens inside aren't pulled out. Optional leading status code
+	// before the marker (e.g. starship's exit code before ❯).
+	{Name: "command", Pattern: re(`^\s*(?:\d+\s+)?[$%❯]\s+(.*\S)`)},
+	// md-url precedes url to claim the whole `[text](url)` and emit the inner URL
+	// (capture group 1).
 	{Name: "md-url", Pattern: re(`\[[^]]*\]\(([^)]+)\)`)},
 	{Name: "url", Pattern: re(`(?:(?:file|ftp|git|https?|ssh)://|git@)[^\s]+`)},
-	{Name: "path", Pattern: re(`(?:[~$\w.+-]+)?(?:\/[\w.+-]+)+`)},
+	// quoted-path: quotes delimit the bounds, so interior spaces are safe; capture
+	// group 1 (the path without quotes) is the value.
+	{Name: "quoted-path", Pattern: re(`["']([^"']*/[^"']*)["']`)},
+	// path: a backslash-escaped space (\ ) is part of a segment, so shell-style
+	// paths with spaces match without over-running into trailing text.
+	{Name: "path", Pattern: re(`(?:[~$\w.+-]|\\ )*(?:\/(?:[\w.+-]|\\ )+)+`)},
+	// datetime precedes date to claim the whole span; both precede ip/ipv6/number
+	// so the time isn't read as an address and the year isn't pulled out alone.
+	{Name: "datetime", Pattern: re(`\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?`)},
+	{Name: "date", Pattern: re(`\b\d{4}-\d{2}-\d{2}\b`)},
+	// uuid precedes sha so sha doesn't claim the leading 8-hex chunk on its own.
+	{Name: "uuid", Pattern: re(`\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b`)},
 	{Name: "sha", Pattern: re(`\b[0-9a-f]{7,40}\b`)},
 	{Name: "hex-color", Pattern: re(`\b#(?:[0-9a-f]{6}|[0-9A-F]{6})\b`)},
 	{Name: "ip", Pattern: re(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`)},

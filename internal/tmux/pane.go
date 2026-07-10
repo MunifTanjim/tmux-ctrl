@@ -1,5 +1,10 @@
 package tmux
 
+import (
+	"strconv"
+	"strings"
+)
+
 type SetPaneOptionParams struct {
 	TargetPane string
 }
@@ -225,19 +230,35 @@ func SplitWindow(params *SplitWindowParams) (string, error) {
 type CapturePaneParams struct {
 	TargetPane string
 	Join       bool // -J: rejoin wrapped lines (so a wrapped URL stays one token)
+
+	// StartLine/EndLine map to -S/-E: line 0 is the visible screen's top,
+	// negatives reach into scrollback. Both nil captures the visible screen.
+	StartLine *int
+	EndLine   *int
 }
 
-// CapturePane runs `capture-pane -p` and returns the visible pane content.
 func CapturePane(params *CapturePaneParams) (string, error) {
 	args := []string{"capture-pane", "-p"}
 	if params.Join {
 		args = append(args, "-J")
 	}
+	if params.StartLine != nil {
+		args = append(args, "-S", strconv.Itoa(*params.StartLine))
+	}
+	if params.EndLine != nil {
+		args = append(args, "-E", strconv.Itoa(*params.EndLine))
+	}
 	if params.TargetPane != "" {
 		args = append(args, "-t", params.TargetPane)
 	}
 
-	return query(args...)
+	// queryRaw, not query: query's trim would drop the first line's indentation,
+	// shifting every column and misaligning the hint overlay.
+	out, err := queryRaw(args...)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(out, "\n"), nil
 }
 
 type SwapPaneParams struct {
