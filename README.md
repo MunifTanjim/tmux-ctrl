@@ -4,20 +4,12 @@ A command-line tool for controlling tmux.
 
 ## Installation
 
-**Prerequisites**:
-
-- [GitHub CLI](https://cli.github.com/) (`gh`)
-
-```sh
-brew install gh
-
-gh auth login
-```
-
 **Quick Install**:
 
+The script needs only `curl` (or `wget`), and uses the [GitHub CLI](https://cli.github.com/) (`gh`) instead when it's installed:
+
 ```sh
-gh api -H "Accept: application/vnd.github.raw" repos/MunifTanjim/tmux-ctrl/contents/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/MunifTanjim/tmux-ctrl/main/scripts/install.sh | bash
 ```
 
 This will install to `~/.local/bin/tmux-ctrl`.
@@ -25,7 +17,7 @@ This will install to `~/.local/bin/tmux-ctrl`.
 To install to a custom directory:
 
 ```sh
-gh api -H "Accept: application/vnd.github.raw" repos/MunifTanjim/tmux-ctrl/contents/scripts/install.sh | INSTALL_DIR=$HOME/.local/bin bash
+curl -fsSL https://raw.githubusercontent.com/MunifTanjim/tmux-ctrl/main/scripts/install.sh | INSTALL_DIR=$HOME/.local/bin bash
 ```
 
 **Manual Installation (from source)**:
