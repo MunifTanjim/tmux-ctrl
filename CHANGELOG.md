@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.6...0.0.7) (2026-08-25)
+
+
+### Bug Fixes
+
+* **pane:** re-invoke tmux-ctrl for interactive move ([d0078f5](https://github.com/MunifTanjim/tmux-ctrl/commit/d0078f52abec6765b589fce335101692790a635d))
+
 ## [0.0.6](https://github.com/MunifTanjim/tmux-ctrl/compare/0.0.5...0.0.6) (2026-07-10)
 
 

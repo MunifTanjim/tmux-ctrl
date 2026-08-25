@@ -1,3 +1,3 @@
 package version
 
-var Version = "0.0.6" // x-release-please-version
+var Version = "0.0.7" // x-release-please-version
