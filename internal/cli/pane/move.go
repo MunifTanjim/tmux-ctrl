@@ -30,15 +30,7 @@ func MoveCommand() *cobra.Command {
 			}
 
 			if direction == "" {
-				var pickedEdge bool
-				direction, pickedEdge, err = pickDirection(edge)
-				if err != nil {
-					return err
-				}
-				if direction == "" {
-					return nil
-				}
-				edge = edge || pickedEdge
+				return showMoveDirectionMenu(paneID, edge)
 			}
 
 			if direction == swapDirection {
@@ -48,6 +40,9 @@ func MoveCommand() *cobra.Command {
 				if size != "" {
 					return errors.New("direction swap cannot be combined with --size")
 				}
+				if target == "" {
+					return showMoveTargetPicker(paneID, direction, size)
+				}
 				return movePaneSwap(paneID, target)
 			}
 
@@ -56,7 +51,11 @@ func MoveCommand() *cobra.Command {
 				return movePaneToEdge(paneID, direction, size)
 			}
 
-			return movePaneRelative(paneID, target, direction, size)
+			// Relative placement needs a target pane.
+			if target == "" {
+				return showMoveTargetPicker(paneID, direction, size)
+			}
+			return joinPaneInDirection(paneID, target, direction, size, false)
 		},
 	}
 

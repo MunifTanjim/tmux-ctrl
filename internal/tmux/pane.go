@@ -115,7 +115,10 @@ func JoinPane(params *JoinPaneParams) error {
 
 type DisplayPanesParams struct {
 	Duration string // -d duration ("0" stays until a key is pressed)
-	Template string // command template; %% is replaced by the selected pane id
+	// Template is the command run on selection. tmux replaces %% with the chosen
+	// pane id, but also rewrites every other %N token (%1, %10, ...) to that same
+	// id, so keep literal pane ids out of the template (pass them via an option).
+	Template string
 }
 
 // DisplayPanes runs `display-panes`, showing the numbered pane indicator and

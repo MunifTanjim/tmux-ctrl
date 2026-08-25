@@ -26,6 +26,31 @@ func TestFractionToPercent(t *testing.T) {
 	}
 }
 
+func TestMoveReinvokeArgs(t *testing.T) {
+	cases := []struct {
+		name                    string
+		paneID, direction, size string
+		target                  string
+		edge                    bool
+		expected                string
+	}{
+		{name: "relative", paneID: "%3", direction: "left", expected: `"tmux-ctrl" pane move -p %3 -d left`},
+		{name: "edge", paneID: "%3", direction: "top", edge: true, expected: `"tmux-ctrl" pane move -p %3 -d top --edge`},
+		{name: "corner", paneID: "%3", direction: "top-left", edge: true, expected: `"tmux-ctrl" pane move -p %3 -d top-left --edge`},
+		{name: "swap", paneID: "%3", direction: "swap", expected: `"tmux-ctrl" pane move -p %3 -d swap`},
+		{name: "with size", paneID: "%3", direction: "left", size: "30%", expected: `"tmux-ctrl" pane move -p %3 -d left --size 30%`},
+		{name: "picker template", direction: "left", target: "%%", expected: `"tmux-ctrl" pane move -d left --target %%`},
+		{name: "picker src option", paneID: "#{q:@tmux_ctrl_pane_move_src}", direction: "left", target: "%%", expected: `"tmux-ctrl" pane move -p #{q:@tmux_ctrl_pane_move_src} -d left --target %%`},
+		{name: "size and target", paneID: "%3", direction: "left", size: "30%", target: "%%", expected: `"tmux-ctrl" pane move -p %3 -d left --size 30% --target %%`},
+	}
+	for _, c := range cases {
+		got := moveReinvokeArgs("tmux-ctrl", c.paneID, c.direction, c.size, c.target, c.edge)
+		if got != c.expected {
+			t.Errorf("%s: moveReinvokeArgs = %q, want %q", c.name, got, c.expected)
+		}
+	}
+}
+
 func TestMaxSplitSize(t *testing.T) {
 	cases := []struct {
 		avail    int

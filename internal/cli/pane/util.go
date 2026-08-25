@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 
@@ -20,12 +21,10 @@ const hidden_session_name = config.HiddenSessionName
 const (
 	// paneTagsOption holds a pane's comma-separated tags (see `pane tag`).
 	paneTagsOption = "@tmux_ctrl_pane_tags"
-	// paneMoveTargetOption passes the pane id chosen in the display-panes picker.
-	paneMoveTargetOption = "@tmux_ctrl_pane_move_target"
-	// paneMoveDirectionOption passes the direction chosen in the display-menu picker.
-	paneMoveDirectionOption = "@tmux_ctrl_pane_move_direction"
-	// paneSwapTargetOption passes the pane id chosen for `pane swap`.
-	paneSwapTargetOption = "@tmux_ctrl_pane_swap_target"
+	// paneMoveSrcOption carries the source pane id into the display-panes target
+	// picker callback. It must not be embedded as a literal "%N" in the template
+	// (see showMoveTargetPicker).
+	paneMoveSrcOption = "@tmux_ctrl_pane_move_src"
 	// paneShowSelectionOption passes the hidden-pane ref chosen in the
 	// display-menu fallback picker (used when fzf is unavailable).
 	paneShowSelectionOption = "@tmux_ctrl_pane_show_selection"
@@ -277,9 +276,6 @@ var directionsHint = strings.Join(paneDirections, ", ")
 // from paneDirections, which is shared with `pane show`.
 const swapDirection = "swap"
 
-// edgeMenuPrefix marks an edge placement in the passed-back value (e.g. "edge:left").
-const edgeMenuPrefix = "edge:"
-
 // moveMenuGroups lists the interactive move menu placements, grouped (relative, edge, corner) with a separator between groups.
 var moveMenuGroups = [][]struct {
 	label, key, dir string
@@ -308,15 +304,46 @@ var moveMenuGroups = [][]struct {
 	},
 }
 
-// pickDirection shows a display-menu of placements and returns the chosen direction and whether it
-// is an edge placement. With edgeOnly, only edge/corner placements are offered. Returns an empty
-// direction (and nil error) when the menu is cancelled.
-func pickDirection(edgeOnly bool) (direction string, edge bool, err error) {
-	if err := tmux.SetGlobalOption(paneMoveDirectionOption, ""); err != nil {
-		return "", false, err
+// selfCommand returns the command tmux must use to re-invoke this binary from a
+// menu or picker callback. It prefers the absolute executable path and falls
+// back to the launch argument.
+func selfCommand() string {
+	if path, err := os.Executable(); err == nil {
+		return path
 	}
-	defer tmux.UnsetGlobalOption(paneMoveDirectionOption)
+	return os.Args[0]
+}
 
+// moveReinvokeArgs builds a `<self> pane move ...` command line with a concrete
+// direction; an empty paneID/size/target omits its flag. The move menu and pane
+// picker run this in tmux's selection callback, avoiding a read-back that races
+// the user's choice.
+func moveReinvokeArgs(self, paneID, direction, size, target string, edge bool) string {
+	// Double-quote self so a path with spaces is not word-split by /bin/sh; the
+	// quotes are literal inside the run-shell single-quoted wrapper.
+	args := []string{`"` + self + `"`, "pane", "move"}
+	if paneID != "" {
+		args = append(args, "-p", paneID)
+	}
+	args = append(args, "-d", direction)
+	if edge {
+		args = append(args, "--edge")
+	}
+	if size != "" {
+		args = append(args, "--size", size)
+	}
+	if target != "" {
+		args = append(args, "--target", target)
+	}
+	return strings.Join(args, " ")
+}
+
+// showMoveDirectionMenu shows the placement menu for srcPaneID. Each item's
+// command re-invokes this binary with a concrete direction (and --edge for edge
+// or corner placements), so the move continues in the item's callback. With
+// edgeOnly, only edge/corner placements are offered.
+func showMoveDirectionMenu(srcPaneID string, edgeOnly bool) error {
+	self := selfCommand()
 	items := make([]tmux.DisplayMenuItem, 0)
 	for _, group := range moveMenuGroups {
 		groupItems := make([]tmux.DisplayMenuItem, 0, len(group))
@@ -324,14 +351,11 @@ func pickDirection(edgeOnly bool) (direction string, edge bool, err error) {
 			if edgeOnly && !mi.edge {
 				continue
 			}
-			value := mi.dir
-			if mi.edge {
-				value = edgeMenuPrefix + mi.dir
-			}
+			cmd := moveReinvokeArgs(self, srcPaneID, mi.dir, "", "", mi.edge)
 			groupItems = append(groupItems, tmux.DisplayMenuItem{
 				Name:    mi.label,
 				Key:     mi.key,
-				Command: "set-option -g " + paneMoveDirectionOption + " " + value,
+				Command: "run-shell -b '" + cmd + "'",
 			})
 		}
 		if len(groupItems) == 0 {
@@ -343,22 +367,7 @@ func pickDirection(edgeOnly bool) (direction string, edge bool, err error) {
 		items = append(items, groupItems...)
 	}
 
-	if err := tmux.DisplayMenu(&tmux.DisplayMenuParams{Title: "Direction", Items: items}); err != nil {
-		return "", false, err
-	}
-
-	chosen, err := tmux.DisplayMessage("#{"+paneMoveDirectionOption+"}", &tmux.DisplayMessageParams{})
-	if err != nil {
-		return "", false, err
-	}
-	if chosen == "" {
-		return "", false, nil
-	}
-	if dir := strings.TrimPrefix(chosen, edgeMenuPrefix); dir != chosen {
-		return dir, true, nil
-	}
-
-	return chosen, isCornerDirection(chosen), nil
+	return tmux.DisplayMenu(&tmux.DisplayMenuParams{Title: "Direction", Items: items})
 }
 
 // paneSplitFlags maps a direction (bottom/top/right/left) to join-pane split
@@ -724,46 +733,9 @@ func anyOtherPane(excludePaneID string) (string, error) {
 	return "", nil
 }
 
-// movePaneRelative moves srcPaneID next to a target pane in the given direction.
-// When target is set, it joins directly. Otherwise it shows the display-panes
-// picker, recording the chosen pane into a global option, then joins in-process.
-func movePaneRelative(srcPaneID, target, direction, size string) error {
-	if target != "" {
-		return joinPaneInDirection(srcPaneID, target, direction, size, false)
-	}
-
-	// Validate direction up front so an invalid value fails before the picker.
-	if _, _, _, err := paneSplitFlags(direction); err != nil {
-		return err
-	}
-
-	chosenTarget, err := pickTargetPane(paneMoveTargetOption)
-	if err != nil {
-		return err
-	}
-	if chosenTarget == "" {
-		// Picker cancelled or timed out.
-		return nil
-	}
-
-	return joinPaneInDirection(srcPaneID, chosenTarget, direction, size, false)
-}
-
-// movePaneSwap swaps srcPaneID with target, picking one via the display-panes
-// picker when target is empty. It is a no-op when the picker is cancelled or the
-// chosen target is srcPaneID itself. The active pane is kept (swap-pane -d).
+// movePaneSwap swaps srcPaneID with target, keeping the active pane
+// (swap-pane -d). It is a no-op when target is srcPaneID itself.
 func movePaneSwap(srcPaneID, target string) error {
-	if target == "" {
-		chosen, err := pickTargetPane(paneMoveTargetOption)
-		if err != nil {
-			return err
-		}
-		if chosen == "" {
-			return nil
-		}
-		target = chosen
-	}
-
 	if target == srcPaneID {
 		return nil
 	}
@@ -775,24 +747,33 @@ func movePaneSwap(srcPaneID, target string) error {
 	})
 }
 
-// pickTargetPane shows the numbered display-panes picker and returns the chosen
-// pane id (empty if cancelled), passing the selection back through option. The id is
-// kept out of the template since display-panes only substitutes the `%%` token
-// and mangles other `%` characters.
-func pickTargetPane(option string) (string, error) {
-	if err := tmux.SetGlobalOption(option, ""); err != nil {
-		return "", err
+// showMoveTargetPicker shows the numbered display-panes picker. The chosen pane
+// id (%%) is substituted into a template that re-invokes this binary with
+// --target set, so the move runs in the picker's callback. The move is a no-op
+// if the picker is cancelled (the template never runs).
+func showMoveTargetPicker(srcPaneID, direction, size string) error {
+	// Validate the direction up front so an invalid value fails before the picker.
+	if direction != swapDirection {
+		if _, _, _, err := paneSplitFlags(direction); err != nil {
+			return err
+		}
 	}
-	defer tmux.UnsetGlobalOption(option)
 
-	if err := tmux.DisplayPanes(&tmux.DisplayPanesParams{
+	// display-panes rewrites every "%N" token in the template (not just "%%") to
+	// the chosen pane id, so a literal source id like "%1" would collide. Pass it
+	// via a global option that run-shell expands in the callback instead. The call
+	// returns before the user picks, so the option cannot be unset here; the next
+	// picker use overwrites it.
+	if err := tmux.SetGlobalOption(paneMoveSrcOption, srcPaneID); err != nil {
+		return err
+	}
+
+	// %% is the chosen pane id; #{q:...} expands to the source id in the callback.
+	cmd := moveReinvokeArgs(selfCommand(), "#{q:"+paneMoveSrcOption+"}", direction, size, "%%", false)
+	return tmux.DisplayPanes(&tmux.DisplayPanesParams{
 		Duration: "0",
-		Template: "set-option -g " + option + " '%%'",
-	}); err != nil {
-		return "", err
-	}
-
-	return tmux.DisplayMessage("#{"+option+"}", &tmux.DisplayMessageParams{})
+		Template: "run-shell -b '" + cmd + "'",
+	})
 }
 
 // movePaneToEdge moves srcPaneID to the window edge in the given direction so it
